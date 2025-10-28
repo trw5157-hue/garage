@@ -1,0 +1,42 @@
+{
+  "short_name": "ICD Tuning",
+  "name": "ICD Tuning - Garage Manager",
+  "description": "Professional garage management system for ICD Tuning Chennai - Track jobs, manage mechanics, generate invoices",
+  "icons": [
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#D32F2F",
+  "background_color": "#000000",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Manager Dashboard",
+      "short_name": "Manager",
+      "description": "Access manager dashboard",
+      "url": "/",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Login",
+      "short_name": "Login",
+      "description": "Login to ICD Tuning",
+      "url": "/login",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    }
+  ]
+}
