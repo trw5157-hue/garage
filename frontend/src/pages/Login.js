@@ -11,6 +11,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const Login = ({ onLogin }) => {
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,6 +29,9 @@ const Login = ({ onLogin }) => {
       const { access_token, user } = response.data;
       onLogin(user, access_token);
       toast.success(`Welcome back, ${user.full_name}!`);
+      
+      // Navigate to dashboard
+      navigate('/');
     } catch (error) {
       console.error('Login error:', error);
       toast.error(error.response?.data?.detail || 'Login failed. Please check your credentials.');
