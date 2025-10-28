@@ -39,6 +39,39 @@ security = HTTPBearer()
 SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "icd-tuning-secret-key-change-in-production")
 ALGORITHM = "HS256"
 
+# Google Sheets Configuration
+GOOGLE_SHEETS_ENABLED = os.environ.get("GOOGLE_SHEETS_ENABLED", "false").lower() == "true"
+GOOGLE_SHEET_ID = os.environ.get("GOOGLE_SHEET_ID", "")
+GOOGLE_SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "")
+
+def get_google_sheets_client():
+    """Initialize Google Sheets client"""
+    if not GOOGLE_SHEETS_ENABLED or not GOOGLE_SERVICE_ACCOUNT_JSON:
+        return None
+    
+    try:
+        # Parse service account JSON
+        service_account_info = json.loads(GOOGLE_SERVICE_ACCOUNT_JSON)
+        
+        # Define the scope
+        scopes = [
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/drive'
+        ]
+        
+        # Create credentials
+        credentials = Credentials.from_service_account_info(
+            service_account_info,
+            scopes=scopes
+        )
+        
+        # Authorize and return client
+        client = gspread.authorize(credentials)
+        return client
+    except Exception as e:
+        logging.error(f"Failed to initialize Google Sheets client: {str(e)}")
+        return None
+
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
