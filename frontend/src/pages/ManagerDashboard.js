@@ -94,15 +94,35 @@ const ManagerDashboard = ({ user, onLogout }) => {
   const handleExportSheets = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post(
+      const response = await axios.post(
         `${API}/export/google-sheets`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Data exported to Google Sheets!');
+      
+      if (response.data.success) {
+        toast.success(response.data.message);
+        
+        // If sheet URL is provided, offer to open it
+        if (response.data.sheet_url) {
+          setTimeout(() => {
+            const openSheet = window.confirm('Export successful! Would you like to open the Google Sheet?');
+            if (openSheet) {
+              window.open(response.data.sheet_url, '_blank');
+            }
+          }, 500);
+        }
+      } else {
+        toast.error(response.data.message || 'Export failed');
+        
+        // Show setup guide if needed
+        if (response.data.setup_guide) {
+          toast.info('Check GOOGLE_SHEETS_SETUP_GUIDE.md for integration instructions');
+        }
+      }
     } catch (error) {
       console.error('Error exporting:', error);
-      toast.info('Google Sheets API not configured.');
+      toast.error('Failed to export to Google Sheets');
     }
   };
 
