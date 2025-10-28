@@ -413,19 +413,133 @@ async def send_invoice_email(job_id: str, current_user: User = Depends(require_m
 
 @api_router.post("/export/google-sheets")
 async def export_to_sheets(current_user: User = Depends(require_manager)):
-    # MOCK: Google Sheets API integration
-    # TODO: Add Google Sheets credentials in .env
-    # GOOGLE_SHEETS_CREDENTIALS_JSON
+    """Export all jobs to Google Sheets"""
     
-    jobs = await db.jobs.find({}, {"_id": 0}).to_list(1000)
+    if not GOOGLE_SHEETS_ENABLED:
+        return {
+            "success": False,
+            "message": "Google Sheets integration not configured. Please add credentials to .env file.",
+            "setup_guide": "/app/GOOGLE_SHEETS_SETUP_GUIDE.md"
+        }
     
-    logging.info(f"[MOCK] Exporting {len(jobs)} jobs to Google Sheets")
+    if not GOOGLE_SHEET_ID:
+        return {
+            "success": False,
+            "message": "GOOGLE_SHEET_ID not set in environment variables"
+        }
     
-    return {
-        "success": True,
-        "message": f"Exported {len(jobs)} jobs (mock mode - add API key to enable)",
-        "job_count": len(jobs)
-    }
+    try:
+        # Get all jobs
+        jobs = await db.jobs.find({}, {"_id": 0}).to_list(1000)
+        
+        if not jobs:
+            return {
+                "success": False,
+                "message": "No jobs found to export"
+            }
+        
+        # Initialize Google Sheets client
+        client = get_google_sheets_client()
+        if not client:
+            return {
+                "success": False,
+                "message": "Failed to initialize Google Sheets client. Check credentials."
+            }
+        
+        # Open the spreadsheet
+        try:
+            sheet = client.open_by_key(GOOGLE_SHEET_ID)
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Failed to open Google Sheet. Make sure the Sheet ID is correct and shared with the service account. Error: {str(e)}"
+            }
+        
+        # Get or create worksheet
+        try:
+            worksheet = sheet.worksheet("ICD Tuning Jobs")
+        except:
+            worksheet = sheet.add_worksheet(title="ICD Tuning Jobs", rows=1000, cols=20)
+        
+        # Clear existing data
+        worksheet.clear()
+        
+        # Prepare headers
+        headers = [
+            "Job ID",
+            "Customer Name",
+            "Contact Number",
+            "Vehicle",
+            "Registration No",
+            "VIN",
+            "Odometer (KMs)",
+            "Entry Date",
+            "Assigned Mechanic",
+            "Work Description",
+            "Estimated Delivery",
+            "Status",
+            "Invoice Amount",
+            "Notes",
+            "Completion Date",
+            "Created At"
+        ]
+        
+        # Prepare data rows
+        data_rows = []
+        for job in jobs:
+            row = [
+                job.get('id', '')[:8],  # Short ID
+                job.get('customer_name', ''),
+                job.get('contact_number', ''),
+                f"{job.get('car_brand', '')} {job.get('car_model', '')} ({job.get('year', '')})",
+                job.get('registration_number', ''),
+                job.get('vin', ''),
+                str(job.get('kms', '')) if job.get('kms') else '',
+                job.get('entry_date', ''),
+                job.get('assigned_mechanic', ''),
+                job.get('work_description', ''),
+                job.get('estimated_delivery', ''),
+                job.get('status', ''),
+                f"₹{job.get('invoice_amount', 0):,.2f}" if job.get('invoice_amount') else '',
+                job.get('notes', ''),
+                job.get('completion_date', ''),
+                job.get('created_at', '')
+            ]
+            data_rows.append(row)
+        
+        # Update sheet with headers and data
+        all_data = [headers] + data_rows
+        worksheet.update('A1', all_data)
+        
+        # Format the header row
+        worksheet.format('A1:P1', {
+            "backgroundColor": {"red": 0.82, "green": 0.18, "blue": 0.18},  # Red
+            "textFormat": {"bold": True, "foregroundColor": {"red": 1, "green": 1, "blue": 1}},
+            "horizontalAlignment": "CENTER"
+        })
+        
+        # Auto-resize columns
+        worksheet.columns_auto_resize(0, len(headers))
+        
+        # Add timestamp
+        export_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        worksheet.update('A' + str(len(data_rows) + 3), [[f"Exported by: {current_user.full_name} on {export_time}"]])
+        
+        logging.info(f"Successfully exported {len(jobs)} jobs to Google Sheets by {current_user.username}")
+        
+        return {
+            "success": True,
+            "message": f"Successfully exported {len(jobs)} jobs to Google Sheets",
+            "job_count": len(jobs),
+            "sheet_url": f"https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}"
+        }
+        
+    except Exception as e:
+        logging.error(f"Error exporting to Google Sheets: {str(e)}")
+        return {
+            "success": False,
+            "message": f"Failed to export to Google Sheets: {str(e)}"
+        }
 
 # ===== INVOICE GENERATION =====
 
