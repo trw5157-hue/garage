@@ -1,0 +1,21 @@
+# PWA Logo Files Needed
+
+You need to create two logo files:
+1. logo192.png (192x192 pixels)
+2. logo512.png (512x512 pixels)
+
+These should be the ICD Tuning logo on a transparent or solid background.
+
+For now, I've created placeholder instructions. You can:
+
+Option 1: Use the ICD signature logo you provided
+- Download: https://customer-assets.emergentagent.com/job_carservice-manager/artifacts/9uvmesio_final%20sign%20white.png
+- Resize to 192x192 and 512x512 pixels
+- Place in /app/frontend/public/
+
+Option 2: Create custom logo files with:
+- ICD Tuning branding
+- Red (#D32F2F) and black theme
+- Transparent or solid background
+
+Until these files are added, the PWA will use default icons.
