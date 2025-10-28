@@ -481,7 +481,12 @@ async def generate_invoice(job_id: str, invoice_data: InvoiceData, current_user:
     elements.append(Spacer(1, 0.3*inch))
     
     # Charges breakdown
-    subtotal = invoice_data.labour_cost + invoice_data.parts_cost + invoice_data.other_charges
+    subtotal = invoice_data.labour_cost + invoice_data.parts_cost + invoice_data.tuning_cost + invoice_data.other_charges
+    
+    # Add custom charges to subtotal
+    for custom_charge in invoice_data.custom_charges:
+        subtotal += custom_charge.get('amount', 0)
+    
     gst_amount = subtotal * (invoice_data.gst_rate / 100)
     grand_total = subtotal + gst_amount
     
@@ -489,11 +494,22 @@ async def generate_invoice(job_id: str, invoice_data: InvoiceData, current_user:
         ['Description', 'Amount (₹)'],
         ['Labour Charges', f'{invoice_data.labour_cost:,.2f}'],
         ['Parts/Materials', f'{invoice_data.parts_cost:,.2f}'],
+        ['Tuning Charges', f'{invoice_data.tuning_cost:,.2f}'],
         ['Other Charges', f'{invoice_data.other_charges:,.2f}'],
+    ]
+    
+    # Add custom charges
+    for custom_charge in invoice_data.custom_charges:
+        charges_data.append([
+            custom_charge.get('description', 'Custom Charge'),
+            f"{custom_charge.get('amount', 0):,.2f}"
+        ])
+    
+    charges_data.extend([
         ['Subtotal', f'{subtotal:,.2f}'],
         [f'GST ({invoice_data.gst_rate}%)', f'{gst_amount:,.2f}'],
         ['GRAND TOTAL', f'₹ {grand_total:,.2f}'],
-    ]
+    ])
     
     charges_table = Table(charges_data, colWidths=[4*inch, 3*inch])
     charges_table.setStyle(TableStyle([
