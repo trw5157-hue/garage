@@ -139,7 +139,11 @@ const ManagerDashboard = ({ user, onLogout }) => {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Wrench className="w-10 h-10 text-red-600" />
+          <img 
+            src="https://customer-assets.emergentagent.com/job_carservice-manager/artifacts/9uvmesio_final%20sign%20white.png" 
+            alt="ICD Tuning Logo" 
+            className="w-16 h-16 object-contain"
+          />
           <div>
             <h1 className="text-3xl font-bold text-white" style={{ fontFamily: 'Exo 2' }}>
               ICD TUNING
