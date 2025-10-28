@@ -132,7 +132,9 @@ class WhatsAppRequest(BaseModel):
 class InvoiceData(BaseModel):
     labour_cost: float = 0
     parts_cost: float = 0
+    tuning_cost: float = 0
     other_charges: float = 0
+    custom_charges: List[dict] = []  # [{"description": "...", "amount": 0}]
     gst_rate: float = 18.0
 
 # ===== HELPER FUNCTIONS =====
