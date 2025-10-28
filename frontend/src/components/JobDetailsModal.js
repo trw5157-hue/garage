@@ -3,18 +3,74 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { X, Camera, FileText } from 'lucide-react';
+import { X, Camera, FileText, Edit, Save } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+const CAR_BRANDS = [
+  'Hyundai', 'Suzuki', 'Maruti', 'Honda', 'Toyota', 'Mahindra', 
+  'Tata', 'Ford', 'VW', 'Skoda', 'Renault', 'Nissan', 'Chevrolet',
+  'Kia', 'MG', 'Jeep', 'BMW', 'Mercedes', 'Audi', 'Other'
+];
+
 const JobDetailsModal = ({ job, open, onClose, onUpdate, isManager }) => {
+  const [editMode, setEditMode] = useState(false);
   const [notes, setNotes] = useState(job.notes || '');
   const [status, setStatus] = useState(job.status);
   const [updating, setUpdating] = useState(false);
+  
+  // Editable fields for manager
+  const [editData, setEditData] = useState({
+    customer_name: job.customer_name,
+    contact_number: job.contact_number,
+    car_brand: job.car_brand,
+    car_model: job.car_model,
+    year: job.year,
+    registration_number: job.registration_number,
+    vin: job.vin || '',
+    kms: job.kms || '',
+    entry_date: job.entry_date,
+    estimated_delivery: job.estimated_delivery,
+    work_description: job.work_description,
+    invoice_amount: job.invoice_amount || '',
+  });
+
+  const handleEditChange = (field, value) => {
+    setEditData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveEdit = async () => {
+    setUpdating(true);
+    try {
+      const token = localStorage.getItem('token');
+      const payload = {
+        ...editData,
+        year: parseInt(editData.year),
+        kms: editData.kms ? parseInt(editData.kms) : null,
+        invoice_amount: editData.invoice_amount ? parseFloat(editData.invoice_amount) : null,
+      };
+      
+      await axios.put(
+        `${API}/jobs/${job.id}`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Job details updated!');
+      setEditMode(false);
+      onUpdate();
+      onClose();
+    } catch (error) {
+      console.error('Error updating job:', error);
+      toast.error('Failed to update job details');
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const handleUpdateNotes = async () => {
     if (notes === job.notes) {
@@ -115,170 +171,338 @@ const JobDetailsModal = ({ job, open, onClose, onUpdate, isManager }) => {
         <DialogHeader>
           <DialogTitle className="text-2xl text-red-600 flex items-center justify-between">
             <span>Job Details</span>
-            <span className={`status-badge ${getStatusClass(status)}`}>{status}</span>
+            <div className="flex items-center gap-2">
+              <span className={`status-badge ${getStatusClass(status)}`}>{status}</span>
+              {isManager && !editMode && (
+                <Button
+                  size="sm"
+                  onClick={() => setEditMode(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  data-testid="edit-job-button"
+                >
+                  <Edit className="w-4 h-4 mr-1" />
+                  Edit
+                </Button>
+              )}
+            </div>
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 mt-4">
-          {/* Customer & Vehicle Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-sm text-gray-400 mb-1">Customer Name</h3>
-              <p className="text-lg font-semibold">{job.customer_name}</p>
-            </div>
-            <div>
-              <h3 className="text-sm text-gray-400 mb-1">Contact Number</h3>
-              <p className="text-lg font-semibold">{job.contact_number}</p>
-            </div>
-            <div>
-              <h3 className="text-sm text-gray-400 mb-1">Vehicle</h3>
-              <p className="text-lg font-semibold">{job.car_brand} {job.car_model} ({job.year})</p>
-            </div>
-            <div>
-              <h3 className="text-sm text-gray-400 mb-1">Registration Number</h3>
-              <p className="text-lg font-semibold">{job.registration_number}</p>
-            </div>
-            {job.vin && (
-              <div>
-                <h3 className="text-sm text-gray-400 mb-1">VIN</h3>
-                <p className="text-lg font-semibold">{job.vin}</p>
-              </div>
-            )}
-            {job.kms && (
-              <div>
-                <h3 className="text-sm text-gray-400 mb-1">Odometer (KMs)</h3>
-                <p className="text-lg font-semibold">{job.kms.toLocaleString()}</p>
-              </div>
-            )}
-            <div>
-              <h3 className="text-sm text-gray-400 mb-1">Entry Date</h3>
-              <p className="text-lg font-semibold">{new Date(job.entry_date).toLocaleDateString()}</p>
-            </div>
-            <div>
-              <h3 className="text-sm text-gray-400 mb-1">Estimated Delivery</h3>
-              <p className="text-lg font-semibold">{new Date(job.estimated_delivery).toLocaleDateString()}</p>
-            </div>
-            <div>
-              <h3 className="text-sm text-gray-400 mb-1">Assigned Mechanic</h3>
-              <p className="text-lg font-semibold">{job.assigned_mechanic}</p>
-            </div>
-            {job.completion_date && (
-              <div>
-                <h3 className="text-sm text-gray-400 mb-1">Completion Date</h3>
-                <p className="text-lg font-semibold text-green-500">
-                  {new Date(job.completion_date).toLocaleDateString()}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Work Description */}
-          <div>
-            <h3 className="text-sm text-gray-400 mb-2">Work Description</h3>
-            <div className="bg-black/30 p-4 rounded-lg">
-              <p className="text-white">{job.work_description}</p>
-            </div>
-          </div>
-
-          {/* Photos */}
-          {job.photos && job.photos.length > 0 && (
-            <div>
-              <h3 className="text-sm text-gray-400 mb-2">Photos</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {job.photos.map((photo, index) => (
-                  <img
-                    key={index}
-                    src={photo}
-                    alt={`Job photo ${index + 1}`}
-                    className="w-full h-32 object-cover rounded-lg border border-gray-700"
+          {editMode && isManager ? (
+            /* Edit Mode */
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-red-500">Edit Job Details</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-white">Customer Name</Label>
+                  <Input
+                    value={editData.customer_name}
+                    onChange={(e) => handleEditChange('customer_name', e.target.value)}
+                    className="bg-black/50 border-gray-700 text-white"
                   />
-                ))}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white">Contact Number</Label>
+                  <Input
+                    value={editData.contact_number}
+                    onChange={(e) => handleEditChange('contact_number', e.target.value)}
+                    className="bg-black/50 border-gray-700 text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white">Car Brand</Label>
+                  <Select value={editData.car_brand} onValueChange={(value) => handleEditChange('car_brand', value)}>
+                    <SelectTrigger className="bg-black/50 border-gray-700 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-900 border-gray-700">
+                      {CAR_BRANDS.map((brand) => (
+                        <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white">Car Model</Label>
+                  <Input
+                    value={editData.car_model}
+                    onChange={(e) => handleEditChange('car_model', e.target.value)}
+                    className="bg-black/50 border-gray-700 text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white">Year</Label>
+                  <Input
+                    type="number"
+                    value={editData.year}
+                    onChange={(e) => handleEditChange('year', e.target.value)}
+                    className="bg-black/50 border-gray-700 text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white">Registration Number</Label>
+                  <Input
+                    value={editData.registration_number}
+                    onChange={(e) => handleEditChange('registration_number', e.target.value.toUpperCase())}
+                    className="bg-black/50 border-gray-700 text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white">VIN</Label>
+                  <Input
+                    value={editData.vin}
+                    onChange={(e) => handleEditChange('vin', e.target.value.toUpperCase())}
+                    className="bg-black/50 border-gray-700 text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white">Odometer (KMs)</Label>
+                  <Input
+                    type="number"
+                    value={editData.kms}
+                    onChange={(e) => handleEditChange('kms', e.target.value)}
+                    className="bg-black/50 border-gray-700 text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white">Entry Date</Label>
+                  <Input
+                    type="date"
+                    value={editData.entry_date}
+                    onChange={(e) => handleEditChange('entry_date', e.target.value)}
+                    className="bg-black/50 border-gray-700 text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white">Estimated Delivery</Label>
+                  <Input
+                    type="date"
+                    value={editData.estimated_delivery}
+                    onChange={(e) => handleEditChange('estimated_delivery', e.target.value)}
+                    className="bg-black/50 border-gray-700 text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-white">Invoice Amount (₹)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={editData.invoice_amount}
+                    onChange={(e) => handleEditChange('invoice_amount', e.target.value)}
+                    className="bg-black/50 border-gray-700 text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-white">Work Description</Label>
+                <Textarea
+                  value={editData.work_description}
+                  onChange={(e) => handleEditChange('work_description', e.target.value)}
+                  rows={4}
+                  className="bg-black/50 border-gray-700 text-white"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={() => setEditMode(false)}
+                  variant="outline"
+                  className="flex-1 border-gray-700 text-white hover:bg-gray-800"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  disabled={updating}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  data-testid="save-edit-button"
+                >
+                  {updating ? 'Saving...' : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
+          ) : (
+            /* View Mode */
+            <>
+              {/* Customer & Vehicle Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm text-gray-400 mb-1">Customer Name</h3>
+                  <p className="text-lg font-semibold">{job.customer_name}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm text-gray-400 mb-1">Contact Number</h3>
+                  <p className="text-lg font-semibold">{job.contact_number}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm text-gray-400 mb-1">Vehicle</h3>
+                  <p className="text-lg font-semibold">{job.car_brand} {job.car_model} ({job.year})</p>
+                </div>
+                <div>
+                  <h3 className="text-sm text-gray-400 mb-1">Registration Number</h3>
+                  <p className="text-lg font-semibold">{job.registration_number}</p>
+                </div>
+                {job.vin && (
+                  <div>
+                    <h3 className="text-sm text-gray-400 mb-1">VIN</h3>
+                    <p className="text-lg font-semibold">{job.vin}</p>
+                  </div>
+                )}
+                {job.kms && (
+                  <div>
+                    <h3 className="text-sm text-gray-400 mb-1">Odometer (KMs)</h3>
+                    <p className="text-lg font-semibold">{job.kms.toLocaleString()}</p>
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-sm text-gray-400 mb-1">Entry Date</h3>
+                  <p className="text-lg font-semibold">{new Date(job.entry_date).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm text-gray-400 mb-1">Estimated Delivery</h3>
+                  <p className="text-lg font-semibold">{new Date(job.estimated_delivery).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm text-gray-400 mb-1">Assigned Mechanic</h3>
+                  <p className="text-lg font-semibold">{job.assigned_mechanic}</p>
+                </div>
+                {job.completion_date && (
+                  <div>
+                    <h3 className="text-sm text-gray-400 mb-1">Completion Date</h3>
+                    <p className="text-lg font-semibold text-green-500">
+                      {new Date(job.completion_date).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Work Description */}
+              <div>
+                <h3 className="text-sm text-gray-400 mb-2">Work Description</h3>
+                <div className="bg-black/30 p-4 rounded-lg">
+                  <p className="text-white">{job.work_description}</p>
+                </div>
+              </div>
+
+              {/* Photos */}
+              {job.photos && job.photos.length > 0 && (
+                <div>
+                  <h3 className="text-sm text-gray-400 mb-2">Photos</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {job.photos.map((photo, index) => (
+                      <img
+                        key={index}
+                        src={photo}
+                        alt={`Job photo ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg border border-gray-700"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Photo */}
+              <div>
+                <Label htmlFor="photo-upload" className="text-white mb-2 flex items-center gap-2">
+                  <Camera className="w-4 h-4" />
+                  Add Photo
+                </Label>
+                <input
+                  id="photo-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                  data-testid="photo-upload-input"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('photo-upload').click()}
+                  disabled={updating}
+                  className="border-gray-700 text-white hover:bg-gray-800"
+                  data-testid="upload-photo-button"
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  Choose Photo
+                </Button>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <Label htmlFor="notes" className="text-white mb-2 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Notes
+                </Label>
+                <Textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Add job notes..."
+                  rows={4}
+                  className="bg-black/50 border-gray-700 text-white"
+                  data-testid="notes-textarea"
+                />
+              </div>
+
+              {/* Status Update (Manager only) */}
+              {isManager && (
+                <div>
+                  <Label className="text-white mb-2">Update Status</Label>
+                  <Select value={status} onValueChange={handleUpdateStatus}>
+                    <SelectTrigger className="bg-black/50 border-gray-700 text-white" data-testid="status-select">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-900 border-gray-700">
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="Done">Done</SelectItem>
+                      <SelectItem value="Delivered">Delivered</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onClose}
+                  className="flex-1 border-gray-700 text-white hover:bg-gray-800"
+                  data-testid="close-button"
+                >
+                  Close
+                </Button>
+                <Button
+                  onClick={handleUpdateNotes}
+                  disabled={updating || notes === job.notes}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                  data-testid="save-notes-button"
+                >
+                  {updating ? 'Saving...' : 'Save Notes'}
+                </Button>
+              </div>
+            </>
           )}
-
-          {/* Upload Photo */}
-          <div>
-            <Label htmlFor="photo-upload" className="text-white mb-2 flex items-center gap-2">
-              <Camera className="w-4 h-4" />
-              Add Photo
-            </Label>
-            <input
-              id="photo-upload"
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              className="hidden"
-              data-testid="photo-upload-input"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => document.getElementById('photo-upload').click()}
-              disabled={updating}
-              className="border-gray-700 text-white hover:bg-gray-800"
-              data-testid="upload-photo-button"
-            >
-              <Camera className="w-4 h-4 mr-2" />
-              Choose Photo
-            </Button>
-          </div>
-
-          {/* Notes */}
-          <div>
-            <Label htmlFor="notes" className="text-white mb-2 flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Notes
-            </Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add job notes..."
-              rows={4}
-              className="bg-black/50 border-gray-700 text-white"
-              data-testid="notes-textarea"
-            />
-          </div>
-
-          {/* Status Update (Manager only) */}
-          {isManager && (
-            <div>
-              <Label className="text-white mb-2">Update Status</Label>
-              <Select value={status} onValueChange={handleUpdateStatus}>
-                <SelectTrigger className="bg-black/50 border-gray-700 text-white" data-testid="status-select">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-900 border-gray-700">
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
-                  <SelectItem value="Done">Done</SelectItem>
-                  <SelectItem value="Delivered">Delivered</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1 border-gray-700 text-white hover:bg-gray-800"
-              data-testid="close-button"
-            >
-              Close
-            </Button>
-            <Button
-              onClick={handleUpdateNotes}
-              disabled={updating || notes === job.notes}
-              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-              data-testid="save-notes-button"
-            >
-              {updating ? 'Saving...' : 'Save Notes'}
-            </Button>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
