@@ -113,3 +113,55 @@ code {
         border-bottom-color: inherit;
     }
 }
+
+@layer utilities {
+    html {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+
+    body {
+        overscroll-behavior-y: none;
+        -webkit-overflow-scrolling: touch;
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+    }
+
+    #root {
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+    }
+
+    * {
+        -webkit-touch-callout: none;
+    }
+
+    input, textarea, select {
+        font-size: 16px;
+    }
+
+    @media (max-width: 768px) {
+        .container {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+    }
+
+    @supports (padding: max(0px)) {
+        body {
+            padding-left: max(0px, env(safe-area-inset-left));
+            padding-right: max(0px, env(safe-area-inset-right));
+            padding-bottom: max(0px, env(safe-area-inset-bottom));
+        }
+    }
+
+    @media (display-mode: standalone) {
+        body {
+            user-select: none;
+        }
+
+        input, textarea {
+            user-select: text;
+        }
+    }
+}

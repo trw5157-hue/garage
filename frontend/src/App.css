@@ -179,6 +179,35 @@ select:focus {
   body {
     font-size: 14px;
   }
+
+  button {
+    min-height: 44px;
+    padding: 12px 20px;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  .card-hover:hover {
+    transform: none;
+  }
+
+  button:hover {
+    transform: none;
+  }
+
+  button:active {
+    transform: scale(0.98);
+  }
 }
 
 /* Custom data-testid highlight for development */

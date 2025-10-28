@@ -2,25 +2,37 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, viewport-fit=cover, user-scalable=yes" />
         <meta name="theme-color" content="#D32F2F" />
         <meta name="description" content="ICD Tuning Garage Management - Professional performance tuning and ECU remapping services in Chennai" />
-        
+
         <!-- PWA Configuration -->
         <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-        <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-        
+
         <!-- iOS PWA Support -->
+        <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/apple-touch-icon.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="ICD Tuning" />
-        
+
         <!-- Android PWA Support -->
         <meta name="mobile-web-app-capable" content="yes" />
-        
-        <!-- Favicon -->
-        <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-        
+        <meta name="application-name" content="ICD Tuning" />
+
+        <!-- Favicons -->
+        <link rel="icon" type="image/x-icon" href="%PUBLIC_URL%/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/favicon-16x16.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="%PUBLIC_URL%/logo192.png" />
+
+        <!-- Microsoft Tiles -->
+        <meta name="msapplication-TileColor" content="#D32F2F" />
+        <meta name="msapplication-TileImage" content="%PUBLIC_URL%/logo192.png" />
+
+        <!-- Prevent pinch zoom on iOS -->
+        <meta name="format-detection" content="telephone=no" />
+
         <title>ICD Tuning - Garage Manager</title>
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
         <!--
