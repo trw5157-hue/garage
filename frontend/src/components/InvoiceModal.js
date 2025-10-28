@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { FileText, Download, Mail } from 'lucide-react';
+import { FileText, Download, Mail, Plus, Trash2 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -14,17 +14,42 @@ const InvoiceModal = ({ job, open, onClose }) => {
   const [invoiceData, setInvoiceData] = useState({
     labour_cost: 0,
     parts_cost: 0,
+    tuning_cost: 0,
     other_charges: 0,
     gst_rate: 18.0,
+    custom_charges: [],
   });
   const [generating, setGenerating] = useState(false);
 
-  const subtotal = invoiceData.labour_cost + invoiceData.parts_cost + invoiceData.other_charges;
+  const subtotal = invoiceData.labour_cost + invoiceData.parts_cost + invoiceData.tuning_cost + invoiceData.other_charges +
+    invoiceData.custom_charges.reduce((sum, charge) => sum + (parseFloat(charge.amount) || 0), 0);
   const gstAmount = subtotal * (invoiceData.gst_rate / 100);
   const grandTotal = subtotal + gstAmount;
 
   const handleChange = (field, value) => {
     setInvoiceData((prev) => ({ ...prev, [field]: parseFloat(value) || 0 }));
+  };
+
+  const handleAddCustomCharge = () => {
+    setInvoiceData((prev) => ({
+      ...prev,
+      custom_charges: [...prev.custom_charges, { description: '', amount: 0 }],
+    }));
+  };
+
+  const handleCustomChargeChange = (index, field, value) => {
+    setInvoiceData((prev) => {
+      const newCustomCharges = [...prev.custom_charges];
+      newCustomCharges[index][field] = field === 'amount' ? (parseFloat(value) || 0) : value;
+      return { ...prev, custom_charges: newCustomCharges };
+    });
+  };
+
+  const handleRemoveCustomCharge = (index) => {
+    setInvoiceData((prev) => ({
+      ...prev,
+      custom_charges: prev.custom_charges.filter((_, i) => i !== index),
+    }));
   };
 
   const handleGenerateInvoice = async () => {
@@ -78,7 +103,7 @@ const InvoiceModal = ({ job, open, onClose }) => {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-2xl" data-testid="invoice-modal">
+      <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-3xl max-h-[90vh] overflow-y-auto" data-testid="invoice-modal">
         <DialogHeader>
           <DialogTitle className="text-2xl text-red-600 flex items-center gap-2">
             <FileText className="w-6 h-6" />
@@ -142,6 +167,19 @@ const InvoiceModal = ({ job, open, onClose }) => {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="tuning_cost" className="text-white">Tuning Charges (₹)</Label>
+                <Input
+                  id="tuning_cost"
+                  type="number"
+                  step="0.01"
+                  value={invoiceData.tuning_cost}
+                  onChange={(e) => handleChange('tuning_cost', e.target.value)}
+                  className="bg-black/50 border-gray-700 text-white"
+                  data-testid="tuning-cost-input"
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="other_charges" className="text-white">Other Charges (₹)</Label>
                 <Input
                   id="other_charges"
@@ -166,6 +204,54 @@ const InvoiceModal = ({ job, open, onClose }) => {
                   data-testid="gst-rate-input"
                 />
               </div>
+            </div>
+
+            {/* Custom Charges */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-white">Custom Charges</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleAddCustomCharge}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  data-testid="add-custom-charge-button"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Row
+                </Button>
+              </div>
+
+              {invoiceData.custom_charges.map((charge, index) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <Input
+                    placeholder="Description (e.g., ECU Remapping)"
+                    value={charge.description}
+                    onChange={(e) => handleCustomChargeChange(index, 'description', e.target.value)}
+                    className="flex-1 bg-black/50 border-gray-700 text-white"
+                    data-testid={`custom-charge-description-${index}`}
+                  />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="Amount"
+                    value={charge.amount}
+                    onChange={(e) => handleCustomChargeChange(index, 'amount', e.target.value)}
+                    className="w-32 bg-black/50 border-gray-700 text-white"
+                    data-testid={`custom-charge-amount-${index}`}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleRemoveCustomCharge(index)}
+                    className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                    data-testid={`remove-custom-charge-${index}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
             </div>
           </div>
 
