@@ -30,8 +30,10 @@ const Login = ({ onLogin }) => {
       onLogin(user, access_token);
       toast.success(`Welcome back, ${user.full_name}!`);
       
-      // Navigate to dashboard
-      navigate('/');
+      // Force reload to dashboard
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
     } catch (error) {
       console.error('Login error:', error);
       toast.error(error.response?.data?.detail || 'Login failed. Please check your credentials.');
