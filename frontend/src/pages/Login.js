@@ -52,7 +52,11 @@ const Login = ({ onLogin }) => {
       <div className="glass rounded-2xl p-8 w-full max-w-md relative z-10 border border-red-600/30">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <Wrench className="w-12 h-12 text-red-600" />
+            <img 
+              src="https://customer-assets.emergentagent.com/job_carservice-manager/artifacts/9uvmesio_final%20sign%20white.png" 
+              alt="ICD Tuning Logo" 
+              className="w-32 h-32 object-contain"
+            />
           </div>
           <h1 className="text-4xl font-bold text-white mb-2" style={{ fontFamily: 'Exo 2' }}>
             ICD TUNING
