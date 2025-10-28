@@ -103,7 +103,11 @@ const MechanicDashboard = ({ user, onLogout }) => {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Wrench className="w-8 h-8 text-red-600" />
+          <img 
+            src="https://customer-assets.emergentagent.com/job_carservice-manager/artifacts/9uvmesio_final%20sign%20white.png" 
+            alt="ICD Tuning Logo" 
+            className="w-12 h-12 object-contain"
+          />
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-white" style={{ fontFamily: 'Exo 2' }}>
               ICD TUNING
